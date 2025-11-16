@@ -1,0 +1,29 @@
+{
+  "name": "bot2",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node watcher.js",
+    "test-iptv": "node test-iptv.js",
+    "test-iptv-melhorado": "node test-iptv-melhorado.js",
+    "test-automation": "node test-automation.js",
+    "debug": "node debug-selectors.js",
+    "debug-site": "node debug-site.js"
+  },
+  "dependencies": {
+    "@huggingface/inference": "^4.13.2",
+    "axios": "^1.13.2",
+    "@whiskeysockets/baileys": "^6.7.21",
+    "dotenv": "^16.6.1",
+    "node-fetch": "^3.3.2",
+    "node-schedule": "^2.1.1",
+    "qrcode-terminal": "^0.12.0",
+    "puppeteer": "^21.0.0"
+  },
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

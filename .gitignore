@@ -1,0 +1,7 @@
+﻿node_modules/
+auth_info/
+bot_memory.json
+.env
+debug-modal-captura.png
+debug-login.js
+*.log
