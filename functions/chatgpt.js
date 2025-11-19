@@ -20,6 +20,12 @@ async function callGroq(messages) {
             temperature: 0.7
         })
     });
+    
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Groq API error (${response.status}): ${errorData.error?.message || response.statusText}`);
+    }
+    
     return response.json();
 }
 
@@ -39,6 +45,12 @@ async function callOpenRouter(messages) {
             temperature: 0.7
         })
     });
+    
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`OpenRouter API error (${response.status}): ${errorData.error?.message || response.statusText}`);
+    }
+    
     return response.json();
 }
 
@@ -74,19 +86,27 @@ ${realtimeInfo}`
                     return resposta;
                 }
             } catch (error) {
-                console.log('⚠️ Groq falhou, tentando OpenRouter...');
+                console.log(`⚠️ Groq falhou: ${error.message}, tentando OpenRouter...`);
             }
         }
 
         // Fallback para OpenRouter
         if (OPENROUTER_API_KEY) {
-            const data = await callOpenRouter(messages);
-            if (data.choices && data.choices[0]) {
-                const resposta = data.choices[0].message.content.trim();
-                addToMemory(userId, 'user', question);
-                addToMemory(userId, 'assistant', resposta);
-                console.log('✅ Resposta via OpenRouter (Gemini 2.0)');
-                return resposta;
+            try {
+                const data = await callOpenRouter(messages);
+                if (data.choices && data.choices[0]) {
+                    const resposta = data.choices[0].message.content.trim();
+                    addToMemory(userId, 'user', question);
+                    addToMemory(userId, 'assistant', resposta);
+                    console.log('✅ Resposta via OpenRouter (Gemini 2.0)');
+                    return resposta;
+                } else if (data.error) {
+                    console.error('❌ OpenRouter retornou erro:', data.error);
+                    throw new Error(data.error.message || 'Erro na API OpenRouter');
+                }
+            } catch (error) {
+                console.error(`❌ OpenRouter também falhou: ${error.message}`);
+                throw error; // Re-throw para ser capturado pelo catch externo
             }
         }
 

@@ -1,8 +1,15 @@
 import cron from 'node-cron';
 
-const TARGET_GROUP = '120363420952651026@g.us';
+// ⚠️ Configurar via variável de ambiente em produção!
+// Exemplo: .env -> SCHEDULER_TARGET_GROUP=120363420952651026@g.us
+const TARGET_GROUP = process.env.SCHEDULER_TARGET_GROUP || '';
 
 export function scheduleGroupMessages(sock) {
+    if (!TARGET_GROUP) {
+        console.log('⚠️ SCHEDULER_TARGET_GROUP não configurado. Agendador desativado.');
+        return;
+    }
+    
     console.log('📅 Agendador ativado');
     
     // Fechar grupo às 23:00 (horário de Brasília)

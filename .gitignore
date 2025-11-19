@@ -1,7 +1,47 @@
-﻿node_modules/
+﻿# Dependências
+node_modules/
+package-lock.json
+
+# Autenticação WhatsApp (CRÍTICO - NUNCA FAZER COMMIT!)
 auth_info/
-bot_memory.json
+
+# Variáveis de ambiente (contém credenciais)
 .env
+.env.local
+.env.production
+
+# Dados sensíveis do bot
+bot_memory.json
+allowed_groups.json
+allowed_users.json
+blacklist.json
+admins.json
+
+# Arquivos de debug/teste (podem conter credenciais)
+debug-*.js
+diagnostico-*.js
+test-*.js
+
+# Screenshots e capturas
+*.png
+*.jpg
+*.jpeg
 debug-modal-captura.png
-debug-login.js
+diagnostico-*.png
+
+# Logs
 *.log
+logs/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

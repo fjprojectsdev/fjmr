@@ -3,6 +3,7 @@ import { getGroupStatus } from './groupStats.js';
 import { addBlockedWord, addBlockedLink, removeBlockedWord, removeBlockedLink, getCustomBlacklist } from './customBlacklist.js';
 import { askChatGPT } from './chatgpt.js';
 import { addAllowedGroup, listAllowedGroups, removeAllowedGroup } from './adminCommands.js';
+import { addAdmin, removeAdmin, listAdmins, getAdminStats, isAuthorized } from './authManager.js';
 
 const BOT_TRIGGER = 'bot';
 
@@ -83,6 +84,9 @@ export async function handleGroupMessages(sock, message) {
 * 🛠️ /adicionargrupo [Nome do Grupo | JID]
 * 🗑️ /removergrupo [Nome do Grupo | JID]
 * 📋 /listargrupos
+* 👮 /adicionaradmin @usuario
+* 🗑️ /removeradmin @usuario
+* 📋 /listaradmins
 ━━━━━━━━━━━━━━━━
 🔒 Sistema de Segurança Ativo
 * Anti-spam automático
@@ -142,9 +146,33 @@ export async function handleGroupMessages(sock, message) {
 
 
 
-    // Comandos /fechar, /abrir, /fixar, /regras, /status, /banir, /bloqueartermo, /bloquearlink, /removertermo, /removerlink, /listatermos, /comandos, /adicionargrupo, /removergrupo, /listargrupos
-    if (text.toLowerCase().includes('/fechar') || text.toLowerCase().includes('/abrir') || text.toLowerCase().includes('/fixar') || text.toLowerCase().includes('/regras') || text.toLowerCase().includes('/status') || text.toLowerCase().includes('/banir') || text.toLowerCase().includes('/bloqueartermo') || text.toLowerCase().includes('/bloquearlink') || text.toLowerCase().includes('/removertermo') || text.toLowerCase().includes('/removerlink') || text.toLowerCase().includes('/listatermos') || text.toLowerCase().includes('/comandos') || text.toLowerCase().includes('/adicionargrupo') || text.toLowerCase().includes('/removergrupo') || text.toLowerCase().includes('/listargrupos')) {
+    // Comandos /fechar, /abrir, /fixar, /regras, /status, /banir, /bloqueartermo, /bloquearlink, /removertermo, /removerlink, /listatermos, /comandos, /adicionargrupo, /removergrupo, /listargrupos, /adicionaradmin, /removeradmin, /listaradmins
+    if (text.toLowerCase().includes('/fechar') || text.toLowerCase().includes('/abrir') || text.toLowerCase().includes('/fixar') || text.toLowerCase().includes('/regras') || text.toLowerCase().includes('/status') || text.toLowerCase().includes('/banir') || text.toLowerCase().includes('/bloqueartermo') || text.toLowerCase().includes('/bloquearlink') || text.toLowerCase().includes('/removertermo') || text.toLowerCase().includes('/removerlink') || text.toLowerCase().includes('/listatermos') || text.toLowerCase().includes('/comandos') || text.toLowerCase().includes('/adicionargrupo') || text.toLowerCase().includes('/removergrupo') || text.toLowerCase().includes('/listargrupos') || text.toLowerCase().includes('/adicionaradmin') || text.toLowerCase().includes('/removeradmin') || text.toLowerCase().includes('/listaradmins')) {
         try {
+            // Lista de comandos que requerem autorização de admin
+            // Comandos informativos (/regras, /status, /comandos) não requerem autorização
+            const adminOnlyCommands = [
+                '/fechar', '/abrir', '/fixar', '/banir', '/bloqueartermo', 
+                '/bloquearlink', '/removertermo', '/removerlink', '/listatermos',
+                '/adicionargrupo', '/removergrupo', '/listargrupos',
+                '/adicionaradmin', '/removeradmin', '/listaradmins'
+            ];
+            
+            // Verificar se o comando requer autorização
+            const requiresAuth = adminOnlyCommands.some(cmd => text.toLowerCase().includes(cmd));
+            
+            // Se requer autorização, verificar se o usuário é admin
+            if (requiresAuth) {
+                const authorized = await isAuthorized(senderId);
+                if (!authorized) {
+                    await sock.sendMessage(groupId, { 
+                        text: '❌ *Acesso Negado*\n\n⚠️ Você não tem permissão para usar este comando.\n\n🔐 Apenas administradores do bot podem executar comandos administrativos.\n\n💡 Entre em contato com um administrador para obter acesso.' 
+                    });
+                    console.log(`🚫 Comando administrativo bloqueado para usuário não autorizado: ${senderId}`);
+                    return;
+                }
+            }
+            
             if (text.toLowerCase().includes('/fechar')) {
                 await sock.groupSettingUpdate(groupId, 'announcement');
                 const closeMessage = `🕛 Mensagem de Fechamento (00:00)
@@ -467,6 +495,67 @@ _Esta notificação foi enviada automaticamente aos administradores._
                         const reply = `📋 Grupos permitidos:\n\n${formatted}`;
                         await sock.sendMessage(senderId, { text: reply });
                     }
+                } else if (text.toLowerCase().startsWith('/adicionaradmin')) {
+                    const mentionedJids = message.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+                    let param = text.replace(/\/adicionaradmin/i, '').trim();
+                    
+                    // Se mencionou alguém, usar o JID mencionado
+                    if (mentionedJids.length > 0) {
+                        param = mentionedJids[0];
+                    }
+                    
+                    if (!param) {
+                        await sock.sendMessage(groupId, { text: '❌ *Uso incorreto!*\n\n📝 Use: `/adicionaradmin @usuario` ou `/adicionaradmin 5564993344024`' });
+                        return;
+                    }
+                    
+                    const result = await addAdmin(senderId, param);
+                    await sock.sendMessage(senderId, { text: result.message });
+                    if (result.success) {
+                        await sock.sendMessage(groupId, { text: `✅ Administrador adicionado com sucesso.` });
+                    }
+                } else if (text.toLowerCase().startsWith('/removeradmin')) {
+                    const mentionedJids = message.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+                    let param = text.replace(/\/removeradmin/i, '').trim();
+                    
+                    // Se mencionou alguém, usar o JID mencionado
+                    if (mentionedJids.length > 0) {
+                        param = mentionedJids[0];
+                    }
+                    
+                    if (!param) {
+                        await sock.sendMessage(groupId, { text: '❌ *Uso incorreto!*\n\n📝 Use: `/removeradmin @usuario` ou `/removeradmin 5564993344024`' });
+                        return;
+                    }
+                    
+                    const result = await removeAdmin(senderId, param);
+                    await sock.sendMessage(senderId, { text: result.message });
+                    if (result.success) {
+                        await sock.sendMessage(groupId, { text: `✅ Administrador removido com sucesso.` });
+                    }
+                } else if (text.toLowerCase().startsWith('/listaradmins')) {
+                    const admins = await listAdmins();
+                    const stats = await getAdminStats();
+                    
+                    if (admins.length === 0) {
+                        await sock.sendMessage(senderId, { text: 'ℹ️ Nenhum administrador configurado.\n\nConfigure via .env (AUTHORIZED_IDS) ou use /adicionaradmin' });
+                        return;
+                    }
+                    
+                    let adminList = `👮 *ADMINISTRADORES DO BOT* 👮\n━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+                    adminList += `📊 *Estatísticas:*\n`;
+                    adminList += `• Total: ${stats.total}\n`;
+                    adminList += `• Do .env: ${stats.fromEnv}\n`;
+                    adminList += `• Do JSON: ${stats.fromFile}\n\n`;
+                    adminList += `━━━━━━━━━━━━━━━━━━━━━━━\n📋 *Lista de Administradores:*\n\n`;
+                    
+                    admins.forEach((admin, index) => {
+                        adminList += `${index + 1}. ${admin.id}\n   └─ Fonte: ${admin.source}\n`;
+                    });
+                    
+                    adminList += `\n━━━━━━━━━━━━━━━━━━━━━━━\n💡 Use /adicionaradmin ou /removeradmin para gerenciar`;
+                    
+                    await sock.sendMessage(senderId, { text: adminList });
             } else if (text.toLowerCase().includes('/bloquearlink')) {
                 const link = text.replace(/\/bloquearlink/i, '').trim();
                 if (link) {
@@ -541,6 +630,12 @@ _Esta notificação foi enviada automaticamente aos administradores._
 * ✏️ /removertermo [palavra]
 * 🔓 /removerlink [dominio]
 * 📝 /listatermos
+* 🛠️ /adicionargrupo [Nome do Grupo | JID]
+* 🗑️ /removergrupo [Nome do Grupo | JID]
+* 📋 /listargrupos
+* 👮 /adicionaradmin @usuario
+* 🗑️ /removeradmin @usuario
+* 📋 /listaradmins
 ━━━━━━━━━━━━━━━━
 📊 COMANDOS DE INFORMAÇÃO:
 

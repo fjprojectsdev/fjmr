@@ -176,7 +176,10 @@ async function startBot() {
                     messageText.toLowerCase().includes('/listatermos') ||
                     messageText.toLowerCase().includes('/adicionargrupo') ||
                     messageText.toLowerCase().includes('/removergrupo') ||
-                    messageText.toLowerCase().includes('/listargrupos')
+                    messageText.toLowerCase().includes('/listargrupos') ||
+                    messageText.toLowerCase().includes('/adicionaradmin') ||
+                    messageText.toLowerCase().includes('/removeradmin') ||
+                    messageText.toLowerCase().includes('/listaradmins')
                 );
 
                 if (isAdminCommand) {
@@ -187,7 +190,7 @@ async function startBot() {
 
                 // Restringir respostas em privados para IDs autorizados/permitidos
                     if (!isGroup) {
-                    if (ALLOWED_USER_IDS.size > 0 && !ALLOWED_USER_IDS.has(senderId) && !isAuthorized(senderId)) {
+                    if (ALLOWED_USER_IDS.size > 0 && !ALLOWED_USER_IDS.has(senderId) && !(await isAuthorized(senderId))) {
                         console.log('⏭️ PV não autorizado — ignorando:', senderId);
                         continue;
                     }

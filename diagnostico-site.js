@@ -70,8 +70,18 @@ async function diagnosticarSite() {
         // 3. Fazer login
         console.log('\n3️⃣ Tentando fazer login...');
         
-        await page.type('input[type="email"], input[type="text"]', 'imavyiptvbrasil@gmail.com');
-        await page.type('input[type="password"]', '@Chavesgt360');
+        // ⚠️ REMOVIDO: Credenciais hardcoded por segurança
+        // Configure as variáveis de ambiente: SITE_EMAIL e SITE_PASSWORD
+        const email = process.env.SITE_EMAIL || '';
+        const password = process.env.SITE_PASSWORD || '';
+        
+        if (!email || !password) {
+            console.error('❌ SITE_EMAIL e SITE_PASSWORD não configurados no .env');
+            return;
+        }
+        
+        await page.type('input[type="email"], input[type="text"]', email);
+        await page.type('input[type="password"]', password);
         
         const botaoLogin = await page.$('button[type="submit"], .btn-primary, input[type="submit"]');
         if (botaoLogin) {

@@ -2,33 +2,14 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getNumberFromJid } from './utils.js';
+import { isAuthorized, checkAuth } from './authManager.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ALLOWED_GROUPS_FILE = path.join(__dirname, '..', 'allowed_groups.json');
 const ALLOWED_USERS_FILE = path.join(__dirname, '..', 'allowed_users.json');
 
-// IDs autorizados a executar os comandos administrativos
-// Suporta JIDs (ex: 227349882745008@lid) e números (ex: 5564993344024)
-export const AUTHORIZED_IDS = new Set([
-    '227349882745008@lid',
-    '225919675449527@lid',
-    '5564993344024'  // número do novo admin
-]);
-
-export function isAuthorized(senderId) {
-    if (!senderId) return false;
-    // comparação exata
-    if (AUTHORIZED_IDS.has(senderId)) return true;
-    // comparar pelo número antes do @ (para cobrir domínios diferentes)
-    const senderNum = getNumberFromJid(senderId);
-    for (const id of AUTHORIZED_IDS) {
-        if (id === senderId) return true;
-        // comparar números (cobrindo JIDs e números puros)
-        const idNum = getNumberFromJid(id);
-        if (idNum && senderNum === idNum) return true;
-    }
-    return false;
-}
+// Re-exportar isAuthorized para compatibilidade
+export { isAuthorized, checkAuth };
 
 async function readAllowedGroups() {
     try {
@@ -63,7 +44,7 @@ async function writeAllowedUsers(list) {
 }
 
 export async function addAllowedGroup(senderId, groupName) {
-    if (!isAuthorized(senderId)) {
+    if (!(await isAuthorized(senderId))) {
         return { success: false, message: '❌ Você não tem permissão para usar este comando.' };
     }
 
@@ -113,7 +94,7 @@ export async function listAllowedGroups() {
 }
 
 export async function removeAllowedGroup(senderId, groupName) {
-    if (!isAuthorized(senderId)) {
+    if (!(await isAuthorized(senderId))) {
         return { success: false, message: '❌ Você não tem permissão para usar este comando.' };
     }
 
