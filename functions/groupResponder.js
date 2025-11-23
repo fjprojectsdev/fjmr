@@ -765,44 +765,48 @@ ${comando}
                     await sock.sendMessage(groupId, { text: 'ℹ️ Não há nenhum lembrete ativo neste grupo.' });
                 }
             } else if (normalizedText.includes('/comandos')) {
-                const comandosMsg = `🤖LISTA DE COMANDOS🤖
+                // Enviar lista apenas no PV
+                await sock.sendMessage(senderId, { text: '📱 *Lista de comandos enviada no privado!*\n\nVerifique suas mensagens privadas.' });
+                
+                const comandosMsg = `🤖 *LISTA COMPLETA DE COMANDOS* 🤖
 ━━━━━━━━━━━━━━━━
-🛂  COMANDOS ADMINISTRATIVOS:
+👮 *COMANDOS ADMINISTRATIVOS:*
 
 * 🔒 /fechar - Fecha o grupo
 * 🔓 /abrir - Abre o grupo
 * 📌 /fixar [mensagem]
 * 🚫 /banir @membro
+* 📢 /aviso [mensagem] - Menciona todos
 * 📢 /lembrete + mensagem 1h 24h
 * 🛑 /stoplembrete - Para lembrete
 * 🚫 /bloqueartermo [palavra]
 * 🔗 /bloquearlink [dominio]
-* ✏ /removertermo [palavra]
+* ✏️ /removertermo [palavra]
 * 🔓 /removerlink [dominio]
 * 📝 /listatermos
-* 🛠 /adicionargrupo [nome]
-* 🗑 /removergrupo [nome]
+* 🛠️ /adicionargrupo [nome]
+* 🗑️ /removergrupo [nome]
 * 📋 /listargrupos
 * 👮 /adicionaradmin @usuario
-* 🗑 /removeradmin @usuario
+* 🗑️ /removeradmin @usuario
 * 📋 /listaradmins
 ━━━━━━━━━━━━━━━━
-📊 COMANDOS DE INFORMAÇÃO:
+📊 *COMANDOS DE INFORMAÇÃO:*
 
 * 📊 /status - Status do grupo
 * 📋 /regras - Regras do grupo
+* 🔗 /link - Link do grupo
 * 📱 /comandos - Lista de comandos
 ━━━━━━━━━━━━━━━━
-🔒 Sistema de Segurança Ativo
-* Anti-spam automático
+🔒 *Sistema de Segurança Ativo*
+* Anti-spam automático com IA
 * Sistema de strikes (3 = expulsão)
-* Bloqueio de links e palavras proibidas
+* Bloqueio de links e palavras
 * Notificação automática aos admins
-* Lembretes automáticos com temporizador
+* Lembretes com encerramento automático
 ━━━━━━━━━━━━━━━━
- iMavyAgent v2.0
-copyright ©`;
-                await sock.sendMessage(groupId, { text: comandosMsg });
+🤖 *iMavyAgent v2.0* - Protegendo seu grupo 24/7`;
+                await sock.sendMessage(senderId, { text: comandosMsg });
             }
         } catch (err) {
             console.error('❌ Erro ao executar comando:', err);
