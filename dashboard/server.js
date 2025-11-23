@@ -8,10 +8,15 @@ const fs = require('fs').promises;
 const path = require('path');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const http = require('http');
+const { Server } = require('socket.io');
 require('dotenv').config();
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: '*' } });
 const PORT = process.env.PORT || 3000;
+console.log(`🔌 Porta configurada: ${PORT}`);
 const SECRET_KEY = process.env.JWT_SECRET || 'chave_super_secreta_padrao';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'FJMR2025';
 
@@ -148,6 +153,7 @@ app.post('/api/banned-words', async (req, res) => {
         list.push(word);
         await writeJson(FILES.BANNED, list);
         await addLog(`Palavra banida adicionada: ${word}`);
+        io.emit('word_added', { word, timestamp: new Date().toISOString() });
     }
     res.json({ success: true });
 });
@@ -159,6 +165,7 @@ app.delete('/api/banned-words/:word', async (req, res) => {
     
     await writeJson(FILES.BANNED, newList);
     await addLog(`Palavra banida removida: ${word}`);
+    io.emit('word_removed', { word, timestamp: new Date().toISOString() });
     res.json({ success: true });
 });
 
@@ -178,6 +185,7 @@ app.post('/api/allowed-groups', async (req, res) => {
         list.push(name);
         await writeJson(FILES.GROUPS, list);
         await addLog(`Grupo permitido adicionado: ${name}`);
+        io.emit('group_added', { name, timestamp: new Date().toISOString() });
     }
     res.json({ success: true });
 });
@@ -222,10 +230,25 @@ app.get('/api/logs', async (req, res) => {
     }
 });
 
+// WebSocket - Eventos em tempo real
+io.on('connection', (socket) => {
+    console.log('✅ Cliente conectado ao WebSocket');
+    
+    socket.on('disconnect', () => {
+        console.log('❌ Cliente desconectado');
+    });
+});
+
+// Função para emitir atualizações
+global.emitDashboardUpdate = async (event, data) => {
+    io.emit(event, data);
+};
+
 // Inicialização
 initDataFiles().then(() => {
-    app.listen(PORT, () => {
-        console.log(`Server rodando na porta ${PORT}`);
-        console.log(`Frontend deve apontar para http://localhost:${PORT}`);
+    server.listen(PORT, '0.0.0.0', () => {
+        console.log(`🖥️ Dashboard rodando na porta ${PORT}`);
+        console.log(`🔌 WebSocket ativo para atualizações em tempo real`);
+        console.log(`🔑 Senha padrão: ${ADMIN_PASSWORD}`);
     });
 });
