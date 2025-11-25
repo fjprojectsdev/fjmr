@@ -43,7 +43,6 @@ _iMavyBot - Seu grupo no piloto automático_`,
 📞 Chame agora: wa.me/5564993344024
 
 _Automação profissional para grupos_`
-    ]
 ];
 
 export async function addPromoGroup(groupId, groupName) {
